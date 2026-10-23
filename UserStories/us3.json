@@ -1,0 +1,14 @@
+{
+    "user_story": {
+      "id": "US-03",
+      "title": "Découpage automatique en User Stories",
+      "role": "Lead Tech / Développeur",
+      "goal": "que le brief de cadrage soit automatiquement décomposé en User Stories normées",
+      "benefit": "obtenir un backlog prêt à être estimé et planifié",
+      "acceptance_criteria": [
+        "Respect strict de la structure 'En tant que / Je veux / Afin de'.",
+        "Chaque US comporte au moins 2 critères d'acceptation mesurables.",
+        "Génération d'un identifiant unique (US-XX) pour chaque story."
+      ]
+    }
+}

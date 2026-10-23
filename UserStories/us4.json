@@ -1,0 +1,13 @@
+{
+    "user_story": {
+      "id": "US-04",
+      "title": "Estimation de la complexité des stories",
+      "role": "Scrum Master / Agent Backlog",
+      "goal": "attribuer une valeur de complexité/effort (Story Points) à chaque User Story",
+      "benefit": "calibrer l'effort nécessaire pour l'exécution automatique",
+      "acceptance_criteria": [
+        "Utilisation de l'échelle relative (1, 2, 3, 5, 8).",
+        "Calcul basé sur le nombre de dépendances et la complexité technique sous-jacente."
+      ]
+    }
+  }

@@ -1,0 +1,13 @@
+{
+    "user_story": {
+        "id": "US-06",
+        "title": "Priorisation du Backlog (Méthode MoSCoW)",
+        "role": "Agent Sprint Manager",
+        "goal": "catégoriser chaque US selon les niveaux Must have, Should have, Could have, Won't have",
+        "benefit": "délivrer le MVP (Minimum Viable Product) dès les premiers Sprints",
+        "acceptance_criteria": [
+            "100% des US priorisées Must have sont planifiées dans les premiers sprints.",
+            "Le backlog de Sprint est trié par ordre de valeur métier descendante."
+        ]
+    }
+}

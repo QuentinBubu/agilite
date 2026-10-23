@@ -1,0 +1,13 @@
+{
+  "user_story": {
+    "id": "US-02",
+    "title": "Clarification autonome des ambiguïtés",
+    "role": "Agent PO",
+    "goal": "Identifier les incohérences ou manques dans le prompt client et formuler des hypothèses explicites",
+    "benefit": "Fermer le périmètre sans bloquer la chaîne avec des questions inutiles (évite les interactions inutiles)",
+    "acceptance_criteria": [
+      "Détection automatique des zones d'ombre dans le brief client.",
+      "Ajout d'une section « Hypothèses retenues » dans le document de cadrage."
+    ]
+  }
+}

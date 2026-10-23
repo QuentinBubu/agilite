@@ -1,6 +1,6 @@
 {
     "user_story": {
-        "id": "US-06",
+        "id": "US-05",
         "title": "Priorisation du Backlog (Méthode MoSCoW)",
         "role": "Agent Sprint Manager",
         "goal": "catégoriser chaque US selon les niveaux Must have, Should have, Could have, Won't have",

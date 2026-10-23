@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pipeline Multi-Agents</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; background: #f4f7f6; color: #333; }
+        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        #chat-box { height: 400px; overflow-y: auto; border: 1px solid #eee; padding: 1rem; margin-bottom: 1rem; background: #fafafa; border-radius: 8px; display: flex; flex-direction: column; gap: 1rem; }
+        .msg { padding: 1rem; border-radius: 8px; max-width: 85%; line-height: 1.5; }
+        .user-msg { background: #000; color: white; align-self: flex-end; }
+        .bot-msg { background: white; border: 1px solid #ddd; align-self: flex-start; }
+        .system-msg { background: #fff3cd; color: #856404; align-self: center; font-size: 0.9rem; padding: 0.5rem; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 1rem; }
+        textarea { flex-grow: 1; padding: 1rem; border: 1px solid #ddd; border-radius: 8px; resize: none; }
+        button { background: #000; color: white; border: none; padding: 0 2rem; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #333; }
+        .btn-pipeline { background: #28a745; width: 100%; padding: 1rem; font-size: 1.1rem; margin-top: 1rem; display: none; }
+        .btn-pipeline:hover { background: #218838; }
+        .btn-pdf { background: #dc3545; width: 100%; padding: 1rem; font-size: 1rem; margin-top: 0.75rem; display: none; }
+        .btn-pdf:hover { background: #bb2d3b; }
+        .pdf-report { position: absolute; left: -10000px; top: 0; width: 794px; padding: 42px; background: white; color: #243447; font-family: Arial, sans-serif; line-height: 1.45; }
+        .pdf-report h1 { color: #173f5f; font-size: 28px; border-bottom: 4px solid #3caea3; padding-bottom: 12px; }
+        .pdf-report h2 { color: #20639b; font-size: 21px; margin-top: 28px; border-bottom: 2px solid #dceef2; padding-bottom: 6px; }
+        .pdf-report h3 { color: #3caea3; font-size: 16px; }
+        .pdf-report table { width: 100%; border-collapse: collapse; font-size: 9px; }
+        .pdf-report th { background: #173f5f; color: white; padding: 7px; }
+        .pdf-report td { border: 1px solid #c9d6df; padding: 6px; vertical-align: top; }
+        .pdf-report tr:nth-child(even) { background: #f1f7f8; }
+        .pdf-report li { margin-bottom: 4px; }
+        
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f8f9fa; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>🤖 Pipeline Multi-Agents Agile</h1>
+        
+        <div id="chat-box">
+            <div class="msg bot-msg">Bonjour ! Je suis l'Agent PO. Décrivez-moi votre projet, je vais vous poser quelques questions pour affiner.</div>
+        </div>
+
+        <div class="input-group">
+            <textarea id="prompt" rows="2" placeholder="Répondez ici..."></textarea>
+            <button id="btn-envoyer">Envoyer (Chat)</button>
+        </div>
+        
+        <button id="btn-pipeline" class="btn-pipeline">🚀 J'ai tout dit, générer le projet complet (Pipeline)</button>
+    </div>
+
+    <script>
+        let conversationHistory = [];
+        const chatBox = document.getElementById('chat-box');
+        const promptInput = document.getElementById('prompt');
+        const btnEnvoyer = document.getElementById('btn-envoyer');
+        const btnPipeline = document.getElementById('btn-pipeline');
+        let finalReport = '';
+        const btnPdf = document.createElement('button');
+        btnPdf.id = 'btn-pdf';
+        btnPdf.className = 'btn-pdf';
+        btnPdf.textContent = '📄 Télécharger le compte rendu en PDF';
+        document.querySelector('.card').appendChild(btnPdf);
+        const pdfReport = document.createElement('div');
+        pdfReport.className = 'pdf-report';
+        document.body.appendChild(pdfReport);
+
+        function appendMessage(text, type) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = type === 'user' ? 'msg user-msg' : (type === 'system' ? 'msg system-msg' : 'msg bot-msg');
+            msgDiv.innerHTML = type === 'user' || type === 'system' ? text : marked.parse(text);
+            msgDiv.id = type === 'system' ? 'loading-msg' : '';
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            
+            // Afficher le bouton de pipeline après le premier échange
+            if(conversationHistory.length > 1) {
+                btnPipeline.style.display = 'block';
+            }
+        }
+
+        function removeLoadingMessage() {
+            const loadingMsg = document.getElementById('loading-msg');
+            if (loadingMsg) loadingMsg.remove();
+        }
+
+        async function downloadPdf() {
+            if (!finalReport) return;
+            if (!window.jspdf || !window.html2canvas) {
+                appendMessage('❌ Les composants PDF ne sont pas disponibles. Rechargez la page puis réessayez.', 'bot');
+                return;
+            }
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+            pdfReport.innerHTML = `
+                <h1>Compte rendu — Pipeline Agile</h1>
+                <p><strong>Généré le :</strong> ${new Date().toLocaleString('fr-FR')}</p>
+                <hr>
+                ${marked.parse(finalReport)}
+            `;
+            await new Promise((resolve, reject) => {
+                pdf.html(pdfReport, {
+                    callback: documentPdf => {
+                        documentPdf.save('compte-rendu-pipeline-agile.pdf');
+                        resolve();
+                    },
+                    x: 10,
+                    y: 10,
+                    width: 190,
+                    windowWidth: 880,
+                    autoPaging: 'text',
+                    margin: [10, 10, 10, 10],
+                    html2canvas: { scale: 1.5, useCORS: true }
+                });
+            });
+        }
+
+        btnPdf.addEventListener('click', downloadPdf);
+
+        async function fetchAPI(actionType) {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), actionType === 'pipeline' ? 70000 : 30000);
+            try {
+                const response = await fetch('api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: actionType, history: conversationHistory }),
+                    signal: controller.signal
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data.error?.message || data.error || `Erreur HTTP ${response.status}`);
+                }
+                if (data.error) throw new Error(data.error.message || data.error);
+                if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    throw new Error('Réponse Gemini vide ou invalide.');
+                }
+                return data;
+            } finally {
+                clearTimeout(timeout);
+            }
+        }
+
+        function getErrorMessage(error) {
+            return error.name === 'AbortError'
+                ? 'Le délai est dépassé. Vérifiez la connexion à Gemini puis réessayez.'
+                : error.message;
+        }
+
+        // Action 1 : Chat avec le PO (Économique)
+        btnEnvoyer.addEventListener('click', async () => {
+            const userInput = promptInput.value.trim();
+            if (!userInput) return;
+
+            appendMessage(userInput, 'user');
+            promptInput.value = '';
+            conversationHistory.push({ role: "user", parts: [{ text: userInput }] });
+            appendMessage('L\'Agent PO réfléchit...', 'system');
+
+            try {
+                const data = await fetchAPI('chat');
+                const botReply = data.candidates[0].content.parts[0].text;
+                removeLoadingMessage();
+                appendMessage(botReply, 'bot');
+                conversationHistory.push({ role: "model", parts: [{ text: botReply }] });
+            } catch (error) {
+                removeLoadingMessage();
+                appendMessage(`❌ ${getErrorMessage(error)}`, 'bot');
+            }
+        });
+
+        // Action 2 : Lancer le Pipeline complet (1 seul appel complet)
+        btnPipeline.addEventListener('click', async () => {
+            appendMessage('🚀 Lancement du pipeline multi-agents... (Cela peut prendre 10-20 secondes)', 'system');
+            btnPipeline.disabled = true;
+            btnEnvoyer.disabled = true;
+
+            // On injecte un faux message pour forcer la clôture de la phase de chat
+            conversationHistory.push({ role: "user", parts: [{ text: "C'est tout bon. Génère le projet complet maintenant." }] });
+
+            try {
+                const data = await fetchAPI('pipeline');
+                const botReply = data.candidates[0].content.parts[0].text;
+                finalReport = botReply;
+                removeLoadingMessage();
+                appendMessage(botReply, 'bot');
+                btnPdf.style.display = 'block';
+                // On cache le bouton car le projet est terminé
+                btnPipeline.style.display = 'none';
+            } catch (error) {
+                removeLoadingMessage();
+                appendMessage(`❌ Erreur lors de la génération du pipeline : ${getErrorMessage(error)}`, 'bot');
+            } finally {
+                btnEnvoyer.disabled = false;
+                btnPipeline.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

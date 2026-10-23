@@ -1,0 +1,13 @@
+{
+    "user_story": {
+        "id": "US-06",
+        "title": "Audit de conformité Agile / Scrum",
+        "role": "Agent Méthodologique",
+        "goal": "valider le backlog et la planification par rapport aux règles du Framework Scrum",
+        "benefit": "détecter les anomalies (US trop larges, dépendances circulaires, sprints surchargés)",
+        "acceptance_criteria": [
+            "Génération d'un rapport de validation méthodologique ('Clean / Warning').",
+            "Correction automatique ou alerte en cas d'écart par rapport au manifeste Agile."
+        ]
+    }
+}

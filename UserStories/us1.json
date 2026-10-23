@@ -1,0 +1,14 @@
+{
+  "user_story": {
+    "id": "US-01",
+    "title": "Capture du besoin brut sans intermédiaire",
+    "role": "Client / Porteur de projet",
+    "goal": "saisir l'idée de mon projet en langage naturel (prompt brut)",
+    "benefit": "lancer immédiatement la conception sans devoir passer par un Product Owner humain.",
+    "acceptance_criteria": [
+      "L'interface/agent accepte du texte libre non structuré.",
+      "L'Agent PO extrait le domaine d'activité, la cible utilisateur et les fonctionnalités clés.",
+      "L'Agent PO génère un résumé de cadrage structuré (Périmètre In/Out)."
+    ]
+  }
+}

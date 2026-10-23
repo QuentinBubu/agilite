@@ -2,7 +2,7 @@
 header('Content-Type: application/json');
 
 // 1. VOTRE CLÉ API ICI (sécurisée côté serveur)
-$apiKey = 'VOTRE API KEY'; 
+$apiKey = 'VOTRE_CLE_API'; 
 // Utilisation du modèle standard le plus stable
 $apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=' . $apiKey;
 

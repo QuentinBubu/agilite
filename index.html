@@ -23,7 +23,7 @@
         .btn-pipeline:hover { background: #218838; }
         .btn-pdf { background: #dc3545; width: 100%; padding: 1rem; font-size: 1rem; margin-top: 0.75rem; display: none; }
         .btn-pdf:hover { background: #bb2d3b; }
-        .pdf-report { position: absolute; left: -10000px; top: 0; width: 794px; padding: 42px; background: white; color: #243447; font-family: Arial, sans-serif; line-height: 1.45; }
+        .pdf-report { display: none; position: fixed; left: 0; top: 0; z-index: 9999; width: 794px; padding: 42px; background: white; color: #243447; font-family: Arial, sans-serif; line-height: 1.45; pointer-events: none; }
         .pdf-report h1 { color: #173f5f; font-size: 28px; border-bottom: 4px solid #3caea3; padding-bottom: 12px; }
         .pdf-report h2 { color: #20639b; font-size: 21px; margin-top: 28px; border-bottom: 2px solid #dceef2; padding-bottom: 6px; }
         .pdf-report h3 { color: #3caea3; font-size: 16px; }
@@ -104,21 +104,53 @@
                 <hr>
                 ${marked.parse(finalReport)}
             `;
-            await new Promise((resolve, reject) => {
-                pdf.html(pdfReport, {
-                    callback: documentPdf => {
-                        documentPdf.save('compte-rendu-pipeline-agile.pdf');
-                        resolve();
-                    },
-                    x: 10,
-                    y: 10,
-                    width: 190,
-                    windowWidth: 880,
-                    autoPaging: 'text',
-                    margin: [10, 10, 10, 10],
-                    html2canvas: { scale: 1.5, useCORS: true }
+            pdfReport.style.display = 'block';
+            try {
+                await new Promise(resolve => requestAnimationFrame(resolve));
+
+                const reportCanvas = await window.html2canvas(pdfReport, {
+                    backgroundColor: '#ffffff',
+                    scale: 1.25,
+                    width: pdfReport.scrollWidth,
+                    height: pdfReport.scrollHeight,
+                    windowWidth: pdfReport.scrollWidth,
+                    windowHeight: pdfReport.scrollHeight,
+                    useCORS: true
                 });
-            });
+            const pageWidth = 190;
+            const pageHeight = 277;
+            const sourcePageHeight = Math.floor(reportCanvas.width * pageHeight / pageWidth);
+            let sourceY = 0;
+            let pageNumber = 0;
+
+            while (sourceY < reportCanvas.height) {
+                const sliceHeight = Math.min(sourcePageHeight, reportCanvas.height - sourceY);
+                const pageCanvas = document.createElement('canvas');
+                pageCanvas.width = reportCanvas.width;
+                pageCanvas.height = sliceHeight;
+                pageCanvas.getContext('2d').drawImage(
+                    reportCanvas,
+                    0, sourceY, reportCanvas.width, sliceHeight,
+                    0, 0, reportCanvas.width, sliceHeight
+                );
+
+                if (pageNumber > 0) pdf.addPage();
+                pdf.addImage(
+                    pageCanvas.toDataURL('image/jpeg', 0.92),
+                    'JPEG',
+                    10,
+                    10,
+                    pageWidth,
+                    sliceHeight * pageWidth / reportCanvas.width
+                );
+                sourceY += sliceHeight;
+                pageNumber += 1;
+            }
+
+            pdf.save('compte-rendu-pipeline-agile.pdf');
+            } finally {
+                pdfReport.style.display = 'none';
+            }
         }
 
         btnPdf.addEventListener('click', downloadPdf);
